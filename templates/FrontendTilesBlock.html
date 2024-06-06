@@ -1,0 +1,71 @@
+<style>
+
+    .cards-section {
+    margin: 20px;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center; /* Center cards */
+}
+
+.card {
+    width: 200px; /* Fixed width for cards */
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-photo {
+    width: 100%;
+    height: 150px; /* Fixed height for photo */
+    background-size: cover;
+    background-position: center;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.card-text {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    resize: none;
+    box-sizing: border-box;
+    overflow: hidden; /* Hide overflow to prevent scrollbars */
+}
+
+</style>
+
+<div class="cards-section">
+    {foreach $tfo_sets as $key => $set}
+        <h2 class="section-title">{$set['name']|escape}</h2>
+        <div class=" cards-container tfo-block product-info--wrapper">
+            
+            {foreach $set['tiles'] as $key => $tile}
+                <div class="card">
+                    <div class="card-photo" style="background-image: url({$tile['path']});"></div>
+                    <div class="card-text" >{$tile['text']|escape}</div>
+                </div>
+            {/foreach}
+        </div>
+    {/foreach}
+</div>
+    
+   
+        
+        
+ 

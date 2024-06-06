@@ -1,0 +1,42 @@
+<h1>Новый набор</h1>
+<form  class="tfo-set-create-form" action="?plugin=tilesfo&module=set&action=createConfirm">
+    <div class="field">
+        <div class="name">Имя</div>
+        <div class="value">
+            
+            <input type="text" name="set[name]" value="">
+            <input type="hidden" name="set[product_id]" value="{$product_id}">
+        </div>
+    </div>
+    <div class="field">
+        <input type="submit" value="сохранить" class="button green">
+        <span class="form-message" style="display: none;"></span>
+    </div>
+</form>
+
+{literal}
+<script type="text/javascript">
+    (function($) {
+        $.tilesfoSetCreate = {
+            form: null,
+            init: function() {
+                this.form = $('.tfo-set-create-form');
+                const self = this;
+                $.tilesfoControl.setActiveBlock("?plugin=tilesfo&module=set&action=create");
+                this.form.fSend(function(jData) {
+                    console.log(jData);
+                    $.tilesfoControl.updateSet(jData['data']['set']);
+                    return;
+                })
+            },
+
+           
+        }
+        
+    })(jQuery);
+    $(document).ready(function() {
+        $.tilesfoSetCreate.init();
+    })
+
+</script>
+{/literal}

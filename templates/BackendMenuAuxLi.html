@@ -1,0 +1,14 @@
+<div class="tfo-popup" style="display: none">
+
+</div>
+{literal}
+<script>
+    (function($) {
+        $.tilesfoHelper = {
+            isValidFilename: function(filename) {
+                return /^[^/?*.:;{}\\]+$/.test(filename);
+            }   
+        }
+    })(jQuery);
+</script>
+{/literal}

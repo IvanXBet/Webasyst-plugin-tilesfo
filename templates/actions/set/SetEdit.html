@@ -1,0 +1,201 @@
+<style>
+    .tiles-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .tile-item {
+        width: 200px; 
+        margin-bottom: 20px;
+        border: 1px solid #ddd; 
+        border-radius: 5px;
+        overflow: hidden; 
+        background-color: #fff;
+    }
+
+    .tile-item .photo {
+        width: 100%;
+        height: 150px;
+        background-size: cover;
+        background-position: center;
+        border-top-left-radius: 5px; 
+        border-top-right-radius: 5px;
+    }
+
+    .tile-item textarea {
+        width: calc(100% - 20px); 
+        margin: 10px; 
+        border-radius: 0;
+        margin-bottom: 5px;
+    }
+
+    .tile-bnts {
+        margin: 0px 10px 10px 10px;
+        width: calc(100% - 15px);
+        height: 30px;
+        align-items: end;
+        flex-direction: column;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .tile-item .tfo-delete-btn {
+        font-size: 12px;
+        background-color: #f44336;
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        padding: 6px;
+        width: 70px;
+        
+    }
+
+    .tile-item .tfo-save-btn {
+        position: relative;
+        right: -20px;
+        background-color: green;
+        color: white;
+        font-size: 12px;
+        border: none;
+        border-radius: 0;
+        padding: 6px;
+        width: 90px;
+    }
+</style>
+<div class="tfo-set-block" data-setId="{$set['id']|escape}">
+    <h1>Набор плиток: {$set['name']|escape}</h1>
+    <form class="tfo_file_upload_form" action="?plugin=tilesfo&module=tile&action=upload" method="POST" enctype="multipart/form-data">
+    <div class="l-dropbox">
+        <a class="l-fileinput-button">
+            <i class="icon16 upload"></i> Перетащите фото
+            <input type="file" name="files[]" multiple="">
+            <input type="hidden" name="product_id" value="{$product_id|escape}">
+            <input type="hidden" name="set_id" value="{$set['id']|escape}">
+        </a>
+        <span class="gray">или просто перетащите их сюда, чтобы начать загрузку</span>
+    </div>
+    {$wa->csrf()}
+    <div class="dialog width500px height400px" id="l_upload_notification">
+        <div class="dialog-background"></div>
+        <div class="dialog-window">
+            <div class="l-upload-list"></div>
+            <div class="dialog-buttons">
+                <div class="block float-right" style="padding-top: 22px;">
+                    <a href="#" class="l-cancel hint cancel">Отмена</a>
+                </div>
+                <div style="display:none; padding-top: 25px;" class="l-upload-errors block errormsg">
+                    Некоторые файлы загружены с ошибками
+                </div>
+            </div>
+        </div>
+    </div>
+    </form>
+
+    <div id="tiles-container" class="tiles-container"></div>
+</div>
+
+{literal}
+<script type="text/javascript">
+    (function($) {
+        $.tilesfoSetEdit = {
+            setId: null,
+            form: null,
+            init: function() {
+                this.form = $('.tfo_file_upload_form');
+                this.setId = $('.tfo-set-block').attr('data-setId');
+                const self = this;
+
+                $.tilesfoControl.setActiveBlock(`?plugin=tilesfo&module=set&action=edit&id=${this.setId}`);
+
+                this.form.goFileUpload(function(jData) {
+                    self.initTilesContainer();
+                    return;
+                })
+
+                this.initTilesContainer();
+            },
+
+            initTilesContainer() {
+                var self = this;
+                var tileContainer = $('#tiles-container');
+                tileContainer.empty();
+                $.post('?plugin=tilesfo&module=tile&action=list&id=' + encodeURIComponent(self.setId), function(response) { 
+                    response.data.forEach(function(tile) {
+                        var tileItem = $(`
+                            <div class="tile-item" id="${tile.id}">
+                                <div class="photo" style="background-image: url(${tile.path});"></div>
+                                <textarea class="tile-text">${tile.text}</textarea>
+                                <div class="tile-bnts">
+                                    <button class="tfo-delete-btn" data-id="${tile.id}">Удалить</button>
+                                    <button class="tfo-save-btn" style="display: none;" data-id="${tile.id}">Сохранить</button>
+                                    
+                                </div>
+                            </div>
+                        `);
+
+                        tileContainer.append(tileItem);
+
+                        tileItem.find('.tfo-delete-btn').on('click', function() {
+
+                            var tileId = $(this).data('id');
+                            $.tilesfoControl.deployPopup('?plugin=tilesfo&module=tile&action=deleteDialog', {tile_id: tileId, set_id: self.setId}, function(response) {
+                                if (response.success) {
+                                    tileItem.remove();
+                                } else {
+                                    console.error('Ошибка удаления:', response.message);
+                                }
+                            })
+                        });
+
+                        tileItem.find('.tile-text').on('input', function() {
+                            tileItem.find('.tfo-save-btn').show();
+                        });
+
+                        
+                        tileItem.find('.tfo-save-btn').on('click', function() {
+                            var tileId = $(this).data('id');
+                            var newText = tileItem.find('.tile-text').val();
+                            $.post('?plugin=tilesfo&module=tile&action=SaveText', { id: tileId, text: newText }, function(jData) {
+                                if(jData.data[0].result == '1'){
+                                    tileItem.find('.tfo-save-btn').hide();
+                                } else {
+                                    console.error('Ошибка сохранения:', jData.data[0].message);
+                                }
+                            });
+                        });
+                    });
+                });
+                tileContainer.sortable({
+                    update: function() {
+                        self.updateSort();
+                    }
+                }).disableSelection();
+            },
+
+            updateSort: function() {
+                const tiles =`tiles= ${$('#tiles-container').sortable("toArray").join(',')}`;
+                data = {
+                    tiles: tiles,
+                    set_id: this.setId
+                }
+                
+                $.ajax({
+                    method: 'post',
+                    url: '?plugin=tilesfo&module=tile&action=tileSort',
+                    data: data,
+                    success: function(jData) {
+                        console.log(jData);
+                    }
+                }, 'json')
+            }
+
+           
+        }
+        
+    })(jQuery);
+    $(document).ready(function() {
+        $.tilesfoSetEdit.init();
+    })
+
+</script>
+{/literal}
+

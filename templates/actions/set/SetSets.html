@@ -1,0 +1,104 @@
+<style>
+    .tfo-sets-table {
+        width: 100%; 
+        border-collapse: collapse; 
+        
+    }
+    .tfo-sets-table th:nth-child(2),
+    .tfo-sets-table th:nth-child(3) {
+        width: 15px; /* Задаем ширину для второго, третьего и четвертого столбцов */
+    }
+</style>
+
+<h1 id="tfo-header-sets" class="tfo-sets-name" data-product_id={$product_id|escape}>Все наборы плиток</h1>
+<div class="tfo-set-blocks mt15" >
+    
+        <div class="tfo-dt-wrap">
+            <table class="tfo-sets-table zebra mt15" data-url="?plugin=tilesfo&module=set&action=list">
+                <thead>
+                    <tr >
+                        <th>Имя набора</th>
+                        <th ></th>
+                        <th ></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    
+</div>
+
+{literal}
+<script type="text/javascript">
+    (function($) {
+        $.tilesfoSets = {
+            form: null,
+            product_id: null,
+            
+            setsTable: null,
+			setsTableContainer: null,
+			setsTableUrl: null,
+
+            init: function() {
+                let self = this;
+                this.product_id = ($('#tfo-header-sets').attr('data-product_id'));
+                
+                this.setsTableContainer = $('.tfo-sets-table');
+				this.setsTableUrl = this.setsTableContainer.attr('data-url');
+
+                this.iconSetEditClass = '.tfo-set-edit';
+				this.iconSetDeleteClass = '.tfo-set-delete';
+
+                $.tilesfoControl.setActiveBlock("?plugin=tilesfo&module=set&action=sets");
+                this.initSetsTable();
+                
+            },
+
+            initSetsTable: function() {
+                
+				var self = this;
+                this.setsTable = this.setsTableContainer.dataTable({
+                    "processing": true,
+                    "serverSide": true,
+                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                    "ajax": self.setsTableUrl+'&product_id='+encodeURIComponent(self.product_id),
+                    "order": [[ 1, "asc" ]],
+                    columnDefs: [{orderable: false}, {targets: [0]}],
+                    "language":{
+                        "sLengthMenu": "Показывать _MENU_ записей",
+                        "sZeroRecords": "Нет записей, удовлетворяющих условиям поиска",
+                        "sInfo": "Отображаются записи с _START_ до _END_ из _TOTAL_",
+                        "sInfoEmpty": "Отображаются записи с 0 до 0 из 0",
+                        "sInfoFiltered": "(отфильтровано из _MAX_ записей)",
+                        "sSearch": "Поиск:",
+                        "processing": "Обработка...",
+                        "oPaginate": { "sNext": ">>", "sPrevious": "<<" }
+                    },
+                    "paging": false,
+                    "info": false,
+                    "searching": false,
+                    "lengthChange": false,
+                });
+
+				this.setsTable.on('draw.dt', function () {
+                
+					var deleteIcon = $(self.iconSetDeleteClass);
+					deleteIcon.on('click', function() {
+						$.tilesfoControl.deployPopup('?plugin=tilesfo&module=set&action=deleteDialog', {set_id: $(this).attr('data-id')});
+					});
+
+					var editIcon = $(self.iconSetEditClass);
+					editIcon.on('click', function() {
+						$.tilesfoControl.deployPopup('?plugin=tilesfo&module=set&action=editDialog', {set_id: $(this).attr('data-id')});
+					});
+				});
+			},
+        }
+    })(jQuery);
+    $(document).ready(function() {
+        $.tilesfoSets.init();
+    })
+
+</script>
+{/literal}
+
