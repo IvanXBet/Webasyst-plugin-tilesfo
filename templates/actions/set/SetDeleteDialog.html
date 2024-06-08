@@ -7,11 +7,11 @@
     <form class="tfo-files-remove-form" data-setId='{$set["id"]|escape}' action="?plugin=tilesfo&module=set&action=delete">
         <input type="hidden" name="set[name]" value="{$set['name']|escape}" />
         <input type="hidden" name="set[id]" value="{$set['id']|escape}"/>
-        <span class="hint">При удалинии набора, все плитки которые в нем находятся тоже будут удаленны</span>
-        <div class="name mt15">Введите его название для его удлания.</div>
+        <span class="hint">При удалении набора, все плитки которые в нем находятся тоже будут удаленны</span>
+        <div class="name mt15">Введите его название для его удаления.</div>
         
         <div class="value mt15">
-            <input type="text" name="nameInput" value="{$set['name']|escape}"/>
+            <input type="text" name="nameInput" value=""/>
         </div>
        
         <div>
@@ -57,10 +57,10 @@
                 }
                 
 				$.post(t.attr('action'), t.serialize(), function(jData) {
-                    console.log(jData)
 					if(jData.data.result == '1')
                     {
                         $.tilesfoSets.setsTable.fnReloadAjax();
+                        $.tilesfoControl.removeSet(jData['data']['id']);
 						$.tilesfoControl.hidePopup();
                     }
 					else 

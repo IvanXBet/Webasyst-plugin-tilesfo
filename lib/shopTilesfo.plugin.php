@@ -223,7 +223,6 @@ class shopTilesfoPlugin  extends shopPlugin
 		}
 		
 		return $result;
-
 	}
 
 	public function saveText($tile_id, $text) 

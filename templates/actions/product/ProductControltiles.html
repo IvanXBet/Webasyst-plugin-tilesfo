@@ -11,22 +11,19 @@
 <script type="text/javascript" src="{$wa_app_static_url}plugins/tilesfo/js/select2.js"></script>
 <script type="text/javascript" src="{$wa_app_static_url}plugins/tilesfo/js/select2_locale_ru.js"></script>
   <style>
-        .sidebar {
-            float: left;
-            width: 200px;
-            background: #f0f0f0;
-        }
-        .tfo-ajax {
-            padding: 20px;
-            border: 1px solid #ccc;
-            min-height: 200px;
-        }
-        .tfo-ajax {
-            width: auto; 
-            height: auto;
-            overflow: auto;
-        }
-        
+    .tfo-sidebar {
+        background: #f0f0f0;
+    }
+    .tfo-ajax {
+        padding: 20px;
+        border: 1px solid #ccc;
+        min-height: 200px;
+    }
+    .tfo-ajax {
+        width: auto; 
+        height: auto;
+        overflow: auto;
+    }
     </style>
  
 <div class="sidebar tfo-sidebar" data-id="{$product_id}" style="width: 200px;">
@@ -158,6 +155,14 @@
 					</li>\
 				`);
 			}
+        },
+
+        removeSet(id) {
+            var self = this;
+			var target = this.setMenu.find(`li[data-id=${id}]`);
+            if(target.length) {
+				target.remove();
+			} 
         },
 
         setsSort: function() {

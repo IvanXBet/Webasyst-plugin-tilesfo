@@ -1,9 +1,4 @@
 <style>
-
-    .cards-section {
-    margin: 20px;
-}
-
 .section-title {
     text-align: center;
     margin-bottom: 20px;
@@ -47,17 +42,16 @@
     box-sizing: border-box;
     overflow: hidden; /* Hide overflow to prevent scrollbars */
 }
-
 </style>
 
 <div class="cards-section">
     {foreach $tfo_sets as $key => $set}
-        <h2 class="section-title">{$set['name']|escape}</h2>
+    <h2 class="section-title">{$set['name']|escape}</h2>
         <div class=" cards-container tfo-block product-info--wrapper">
             
             {foreach $set['tiles'] as $key => $tile}
                 <div class="card">
-                    <div class="card-photo" style="background-image: url({$tile['path']});"></div>
+                    <div class="card-photo" style='background-image: url({$tile["path"]|escape});'></div>
                     <div class="card-text" >{$tile['text']|escape}</div>
                 </div>
             {/foreach}
