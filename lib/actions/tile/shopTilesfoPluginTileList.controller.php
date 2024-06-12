@@ -15,12 +15,12 @@ class shopTilesfoPluginTileListController extends waJsonController
 		
 		$items = array();
 		foreach ($tiles as $tile) {
-			$public_path = wa()->getDataUrl('plugins/tilesfo/' . $set_id, true, 'shop', true);
+			$thumb_url = shopTilesfoPluginHelper::getThumbUrl($set_id, $tile['id'], '0x200', $tile['ext']);
 			$tmp = array(
 				'id' => intval($tile['id']),
 				'name' => htmlspecialchars($tile['name'] . '.' . $tile['ext'], ENT_QUOTES),
 				'text' => htmlspecialchars($tile['text'], ENT_QUOTES),
-				'path' => $public_path . '/' . $tile['id'] . '.' . $tile['ext'],
+				'path' => $thumb_url,
 			);
 			array_push($items, $tmp);
 		}

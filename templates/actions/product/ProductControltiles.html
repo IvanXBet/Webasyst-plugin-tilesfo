@@ -10,31 +10,18 @@
 <script type="text/javascript" src="{$wa_app_static_url}plugins/tilesfo/js/jquery.dataTables.reload.plugin.js"></script>
 <script type="text/javascript" src="{$wa_app_static_url}plugins/tilesfo/js/select2.js"></script>
 <script type="text/javascript" src="{$wa_app_static_url}plugins/tilesfo/js/select2_locale_ru.js"></script>
-  <style>
-    .tfo-sidebar {
-        background: #f0f0f0;
-    }
-    .tfo-ajax {
-        padding: 20px;
-        border: 1px solid #ccc;
-        min-height: 200px;
-    }
+<style>
     .tfo-ajax {
         width: auto; 
         height: auto;
         overflow: auto;
     }
-    </style>
+</style>
  
-<div class="sidebar tfo-sidebar" data-id="{$product_id}" style="width: 200px;">
+<div class="sidebar tfo-sidebar" data-id="{$product_id|escape}" style="width: 200px;">
     <div class="block">
         <ul class="menu-v with-icons">
-            <li class="bottom-padded ">
-                <a class="tfo-link" href="?plugin=tilesfo&module=set&action=sets" data-post="product_id={$product_id|escape}">
-                    <i class="icon16 folder"></i>Все наборы
-                </a>
-            </li>
-            <li class="bottom-padded">
+            <li>
                 <a class="tfo-link" href="?plugin=tilesfo&module=set&action=create" data-post="product_id={$product_id|escape}">
                     <i class="icon16 add"></i>Новый набор
                 </a>
@@ -54,7 +41,7 @@
         </ul>
     </div>
 </div>
-<div class="content left250px">
+<div class="content left150px">
     <div class="block double-padded tfo-ajax"><i class="icon16 loading"></i></div>
 </div>
 
@@ -105,11 +92,13 @@
                     return;
                 }
             }
+
+            console.log(self.product_id)
             
             
-            u = '?plugin=tilesfo&module=set&action=sets';
+            u = '?plugin=tilesfo&module=set&action=create';
            
-            $.post(u, function(jData) {
+            $.post(u,{product_id: self.product_id}, function(jData) {
                 $.cookie('tfo_url', u, { expires: 365 });
                 $.cookie('tfo_product_id', self.product_id, { expires: 365 });
                 self.ajaxContent.html(jData);
@@ -147,7 +136,7 @@
 			} else {
 				this.setMenu.append(`\
 					<li id=${self.escapeHtml(item.id)} data-id=${self.escapeHtml(item.id)}>\
-                        <a class="tfo-link" href="?plugin=tilesfo&module=set&action=edit&id=${item.id}" data-post="id=${self.escapeHtml(item.product_id)}">\
+                        <a class="tfo-link" href="?plugin=tilesfo&module=set&action=edit&id=${item.id}" data-post="product_id=${self.escapeHtml(item.product_id)}">\
 						
 							<i class="icon16 sort"></i>\
 							<span>${self.escapeHtml(item.name)}</span>\

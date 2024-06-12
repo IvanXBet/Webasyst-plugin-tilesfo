@@ -33,7 +33,7 @@ class shopTilesfoPlugin  extends shopPlugin
 		);
 	}
 
-	static public function frontendProductTiles($product_id) 
+	static public function frontendProductTiles($product_id, $width, $height) 
 	{
 		$setsCollection = new shopTilesfoPluginSetCollection();
 		$setsCollection->addWhere("T.product_id = ".$product_id);
@@ -49,7 +49,8 @@ class shopTilesfoPlugin  extends shopPlugin
 			$tiles = $tilesCollection->getItems('T.id, set_id, name, ext, text, sort');
 			$public_path = wa()->getDataUrl('plugins/tilesfo/' . $set_id, true, 'shop', true);
 			foreach ($tiles as &$tile) {
-				$tile['path'] = $public_path . '/' . $tile['id'] . '.' . $tile['ext'];
+				$thumb_url = shopTilesfoPluginHelper::getThumbUrl($tile['set_id'], $tile['id'], $width.'x'.$height, $tile['ext']);
+				$tile['path'] = $thumb_url;
 			}
 			$set['tiles'] = $tiles;
 			$items[$set_id] = $set;
@@ -111,6 +112,11 @@ class shopTilesfoPlugin  extends shopPlugin
 			return array('result' => 0, 'message' => 'Системная ошибка #IDNONUM');
 		}
 		$set_model->remove($id);
+		$path_public = wa()->getDataPath("plugins/tilesfo/$id/", true);
+		$path_protected = wa()->getDataPath("plugins/tilesfo/$id/", false);
+		waFiles::delete($path_public);
+		waFiles::delete($path_protected);
+
 		return array('result' => 1,'message' => 'Успешное удаление', 'id'=>$id);
 	}
 
@@ -131,13 +137,16 @@ class shopTilesfoPlugin  extends shopPlugin
 		$tile_model = new shopTilesfoPluginTileModel();
 		$result = array();
 
+		$tmp_path = wa()->getDataPath('plugins/tilesfo/tmp/', true, 'shop');
+		
+
+		$valid_extensions = ['jpg', 'jpeg', 'png'];
+
 		if(!is_numeric($set_id)) 
 		{
 			$result[] = array('result' => 0, 'message' => 'Ошибка записи файла. Не известный набор');
 			return $result;
 		}
-		$path = wa()->getDataPath('plugins/tilesfo/'.$set_id, true, 'shop');
-		$tmp_path = wa()->getDataPath('plugins/tilesfo/tmp/', true);
 		
 		foreach($files as $file) 
 		{
@@ -147,40 +156,49 @@ class shopTilesfoPlugin  extends shopPlugin
 				$uuid = $tile_model->getUUID();
 				try
 				{
-					if((file_exists($path) && !is_writable(($path)) || !file_exists($path) && !waFiles::create($path))) 
+					$file->copyTo($tmp_path.$uuid.'.'.$file->extension);
+					$hash = md5(file_get_contents($tmp_path.$uuid.'.'.$file->extension));
+					waFiles::delete($tmp_path.$uuid.'.'.$file->extension);
+
+					if($tile_model->getByField(array('hash' => $hash, 'set_id' => $set_id))) 
 					{
-						$result[] = array('result' => 0, 'message' => 'Ошибка записи файла. Проверте права на запись');
+						$file = $tile_model->getByField(array('hash' => $hash, 'set_id' => $set_id));
+
+						$result[] = array('result' => 0, 'message' => 'Плитка с такой фотографией уже есть', 'file' => $file); 
+						continue;
 					}
-					else
-					{
-						$file->copyTo($tmp_path.$uuid.'.'.$file->extension);
-						$hash = md5(file_get_contents($tmp_path.$uuid.'.'.$file->extension));
-						waFiles::delete($tmp_path.$uuid.'.'.$file->extension);
-
-						if($tile_model->getByField(array('hash' => $hash, 'set_id' => $set_id))) 
-						{
-							$file = $tile_model->getByField(array('hash' => $hash, 'set_id' => $set_id));
-
-							$result[] = array('result' => 0, 'message' => 'Плитка с такой фотографией уже есть', 'file' => $file); 
-							continue;
-						}
-						
-						$data = array(
-							'set_id' => $tile_model->escape($set_id),
-							'name' => pathinfo(basename($file->name), PATHINFO_FILENAME),
-							'size' => $file->size,
-							'original_filename' => basename($file->name),
-							'ext' => $file->extension,
-							'hash' => $hash,
-							'sort' => $tile_model->getMaxSort($set_id)+1,
-						);
-
-						$id = $tile_model->insert($data);
-						$file->moveTo($path, $id.'.'.$file->extension);
-						
-						$result[] = array('result' => 1, 'message' => 'Файл загружен', 'file' =>  $tile_model->getById($id));
-						
+					
+					$data = array(
+						'set_id' => $tile_model->escape($set_id),
+						'name' => pathinfo(basename($file->name), PATHINFO_FILENAME),
+						'size' => $file->size,
+						'original_filename' => basename($file->name),
+						'ext' => $file->extension,
+						'hash' => $hash,
+						'sort' => $tile_model->getMaxSort($set_id)+1,
+					);
+					if (!in_array($file->extension, $valid_extensions)) {
+						$result[] = array('result' => 0, 'massage' => 'Расширение файла не подходит для сертификата');
+						continue;
 					}
+					
+
+					$id = $tile_model->insert($data);
+					$thumb_path =  shopTilesfoPluginHelper::getOriginalPath($set_id);
+					waFiles::create($thumb_path);
+					$file->moveTo($thumb_path, $id.'.'.$file->extension);
+					
+					$size = '0x400'; 
+					$max_size = '2000';
+					$thumb_url = shopTilesfoPluginHelper::getThumbUrl($set_id, $id, $size, $file->extension);
+
+					$result[] = array(
+						'result' => 1,
+						'message' => 'Файл загружен',
+						'file' => $tile_model->getById($id),
+						'thumb_url' => $thumb_url,
+						'thumb_path' => $thumb_path,
+					);
 				}
 				catch (Exception $e)
 				{
@@ -208,7 +226,11 @@ class shopTilesfoPlugin  extends shopPlugin
 			{
 				$tile = $tile_model->getById($tile_id);
 				$tile_model->deleteById($tile_id);
-				unlink($path.'/'.$tile['id'].'.'.$tile['ext']);
+
+				$path = shopTilesfoPluginHelper::getOriginalPath($tile['set_id'], $tile['id'], $tile['ext']);
+				$thumb_path =  shopTilesfoPluginHelper::getThumbsPath($tile['set_id'], $tile['id']);
+				waFiles::delete($thumb_path);
+				waFiles::delete($path);
 				$result[] = array('result' => 1, 'message' => 'Плитка удалена');
 			}
 			else

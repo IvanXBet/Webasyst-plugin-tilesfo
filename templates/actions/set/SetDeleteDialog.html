@@ -46,13 +46,13 @@
 				var m = t.find('.form-message');
                 var filename = $("input[name='set[name]']").prop('value');
                 var filenameInput = $("input[name='nameInput']").prop('value');
-                
+                console.log(filename, filenameInput);
 				m.hide();
 				
                 if(filename != filenameInput)
                 {
                     m.css('color', 'red');
-                    m.text("Имя файла введено не правильно").show();
+                    m.text("Имя набора введено не правильно").show();
                     return false;
                 }
                 

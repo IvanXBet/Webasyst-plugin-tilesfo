@@ -8,15 +8,15 @@
         <input type="hidden" name="set[name]" value="{$set['name']|escape}"/>
         <input type="hidden" name="set[id]" value="{$set['id']|escape}"/>
         <input type="hidden" name="set[tile_id]" value="{$tile['id']|escape}"/>
-        <div class="name mt15">Введите название набора для удлания плитки.</div>
+        <div class="hint">Введите название набора для удаления плитки.</div>
         
-        <div class="value mt15">
-            <input type="text" name="nameInput" value=""/>
+        <div class="value" style="margin-top: 10px;">
+            <input type="text" name="nameInput" id="nameInputNewName" />
         </div>
        
-        <div>
-            <input type="submit" class="button red mt15" value="Удалить">
-            <span class="form-message mt15" style="display: block;"></span>
+        <div style="display: flex; align-items: center; margin-top: 10px;">
+            <input type="submit" class="button red" value="Удалить">
+            <span class="form-message" style="display: block;"></span>
         </div>
     </form>
 </div>
@@ -40,20 +40,21 @@
 		initForm: function() {
 			var self = this;
            
-			this.form.submit(function() {
+			this.form.on('submit', function(e) {
+                e.preventDefault();
 				var t = $(this);
 				var m = t.find('.form-message');
-                var filename = $("input[name='set[name]']").prop('value');
-                var filenameInput = $("input[name='nameInput']").prop('value');
-                
-				m.hide();
-				
-                if(filename != filenameInput)
-                {
+                var filename = $("input[name='set[name]']").val();
+                var filenameInput = $('#nameInputNewName').val(); 
+
+                m.hide();
+
+                if(filename != filenameInput) {
                     m.css('color', 'red');
-                    m.text("Имя файла введено не правильно").show();
+                    m.text("Имя набора введено не правильно").show();
                     return false;
                 }
+
                 
 				$.post(t.attr('action'), t.serialize(), function(jData) {
 					if(jData.data[0].result == '1')

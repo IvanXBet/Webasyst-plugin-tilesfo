@@ -3,13 +3,12 @@
     <div class="field">
         <div class="name">Имя</div>
         <div class="value">
-            
             <input type="text" name="set[name]" value="">
-            <input type="hidden" name="set[product_id]" value="{$product_id}">
+            <input type="hidden" name="set[product_id]" value="{$product_id|escape}">
         </div>
     </div>
     <div class="field">
-        <input type="submit" value="сохранить" class="button green">
+        <input type="submit" value="Создать" class="button green">
         <span class="form-message" style="display: none;"></span>
     </div>
 </form>
@@ -25,7 +24,21 @@
                 $.tilesfoControl.setActiveBlock("?plugin=tilesfo&module=set&action=create");
                 this.form.fSend(function(jData) {
                     console.log(jData);
-                    $.tilesfoControl.updateSet(jData['data']['set']);
+                    if(jData.data.result == 1)
+                        {
+                            $.tilesfoControl.updateSet(jData['data']['set']);
+                            u = `?plugin=tilesfo&module=set&action=edit&id=${jData.data.set.id}`;
+                            $.cookie('tfo_url', u, { expires: 365 });
+                            
+                            $.tilesfoControl.initPage();
+                        }
+                        else 
+                        {
+                            m.text(jData.data.message).show();
+                            setTimeout(function() {
+                                m.hide(); 
+                            }, 5000);
+                        }
                     return;
                 })
             },

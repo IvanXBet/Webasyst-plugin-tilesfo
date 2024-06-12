@@ -27,6 +27,7 @@
         margin: 10px; 
         border-radius: 0;
         margin-bottom: 5px;
+        resize: none;
     }
 
     .tile-bnts {
@@ -61,36 +62,80 @@
         width: 90px;
     }
 </style>
-<div class="tfo-set-block" data-setId="{$set['id']|escape}">
-    <h1>Набор плиток: {$set['name']|escape}</h1>
-    <form class="tfo_file_upload_form" action="?plugin=tilesfo&module=tile&action=upload" method="POST" enctype="multipart/form-data">
-    <div class="l-dropbox">
-        <a class="l-fileinput-button">
-            <i class="icon16 upload"></i> Перетащите фото
-            <input type="file" name="files[]" multiple="">
-            <input type="hidden" name="product_id" value="{$product_id|escape}">
-            <input type="hidden" name="set_id" value="{$set['id']|escape}">
-        </a>
-        <span class="gray">или просто перетащите их сюда, чтобы начать загрузку</span>
-    </div>
-    {$wa->csrf()}
-    <div class="dialog width500px height400px" id="l_upload_notification">
-        <div class="dialog-background"></div>
-        <div class="dialog-window">
-            <div class="l-upload-list"></div>
-            <div class="dialog-buttons">
-                <div class="block float-right" style="padding-top: 22px;">
-                    <a href="#" class="l-cancel hint cancel">Отмена</a>
-                </div>
-                <div style="display:none; padding-top: 25px;" class="l-upload-errors block errormsg">
-                    Некоторые файлы загружены с ошибками
+<div class="tfo-set-blocks" data-setId="{$set['id']|escape}">
+    <h1 class="tfo-set-title">Набор плиток: {$set['name']|escape}</h1>
+    <ul class="menu-h mt15 tfo-menu" >
+        <li class="selected" data-block="tiles"><a>Набор</a></li>
+        <li data-block="rename" ><a>Изменить имя набора</a></li>
+        <li data-block="delete" ><a>Удалить набор</a></li>
+    </ul>
+<div class="tfo-block"  data-block="tiles">
+    <form id="tfo_file_upload_form" action="?plugin=tilesfo&module=tile&action=upload" method="POST" enctype="multipart/form-data">
+        <div class="l-dropbox">
+            <a class="l-fileinput-button">
+                <i class="icon16 upload"></i> Перетащите фото
+                <input type="file" name="files[]" multiple="">
+                <input type="hidden" name="product_id" value="{$product_id|escape}">
+                <input type="hidden" name="set_id" value="{$set['id']|escape}">
+            </a>
+            <span class="gray">или просто перетащите их сюда, чтобы начать загрузку</span>
+        </div>
+        {$wa->csrf()}
+        <div class="dialog width500px height400px" id="l_upload_notification">
+            <div class="dialog-background"></div>
+            <div class="dialog-window">
+                <div class="l-upload-list"></div>
+                <div class="dialog-buttons">
+                    <div class="block float-right" style="padding-top: 22px;">
+                        <a href="#" class="l-cancel hint cancel">Отмена</a>
+                    </div>
+                    <div style="display:none; padding-top: 25px;" class="l-upload-errors block errormsg">
+                        Некоторые файлы загружены с ошибками
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </form>
 
     <div id="tiles-container" class="tiles-container"></div>
+
+</div>
+
+<div class="tfo-block hidden"  data-block="rename">
+   <form class="tfo-files-edit-form" data-setId='{$set["id"]|escape}' action="?plugin=tilesfo&module=set&action=editName">
+            <input type="hidden" name="set[id]" value="{$set['id']|escape}" />
+            <div class="field" style="padding-top: 10px;">
+                <div class="name" style="width: 70px;">Новое имя</div>
+                <div class="value">
+                    <input type="text" name="set[name]" value="{$set['name']|escape}"/>
+                </div>
+            </div>
+    
+            <div style="display: flex; align-items: center;">
+                <input type="submit" class="button green" value="Изменить">
+                <span class="form-message mt15" style="display: block; margin-left: 10px;"></span>
+            </div>
+        </form>
+</div>
+
+<div class="tfo-block hidden"  data-block="delete">
+    <form class="tfo-files-remove-form" data-setId='{$set["id"]|escape}' action="?plugin=tilesfo&module=set&action=delete">
+        <input type="hidden" name="set[name]" value="{$set['name']|escape}" />
+        <input type="hidden" name="set[id]" value="{$set['id']|escape}"/>
+        <span class="hint">При удалении набора, все плитки которые в нем находятся тоже будут удаленны</span>
+        <div class="hint">Введите его название для удаления.</div>
+        
+        <div class="value mt15">
+            <input type="text" name="nameInput" value=""/>
+        </div>
+       
+        <div>
+            <input type="submit" class="button red mt15" value="Удалить">
+            <span class="form-message mt15" style="display: block;"></span>
+        </div>
+    </form>
+</div>
+
 </div>
 
 {literal}
@@ -99,22 +144,41 @@
         $.tilesfoSetEdit = {
             setId: null,
             form: null,
+            menu: null,
+            block: null,
+            formEdit: null,
+            formDelete: null,
+            title: null,
             init: function() {
-                this.form = $('.tfo_file_upload_form');
-                this.setId = $('.tfo-set-block').attr('data-setId');
                 const self = this;
-
+                this.formUpload = $('#tfo_file_upload_form');
+                this.setId = $('.tfo-set-blocks').attr('data-setId');
+                this.menu = $('.tfo-menu');
+                this.block = $('.tfo-block');
+                this.formEdit = $('.tfo-files-edit-form');
+                this.formDelete = $('.tfo-files-remove-form');
+                this.title = $('.tfo-set-title');
+                
                 $.tilesfoControl.setActiveBlock(`?plugin=tilesfo&module=set&action=edit&id=${this.setId}`);
 
-                this.form.goFileUpload(function(jData) {
+                this.initFormUpload();
+                this.initTilesContainer();
+                this.initMenu();
+                this.initFormEdit();
+                this.initFormDelete();
+                
+            },
+
+            initFormUpload: function() {
+                const self = this;
+                this.formUpload.goFileUpload(function(jData) {
                     self.initTilesContainer();
                     return;
                 })
 
-                this.initTilesContainer();
             },
 
-            initTilesContainer() {
+            initTilesContainer: function() {
                 var self = this;
                 var tileContainer = $('#tiles-container');
                 tileContainer.empty();
@@ -123,11 +187,10 @@
                         var tileItem = $(`
                             <div class="tile-item" id="${tile.id}">
                                 <div class="photo" style="background-image: url(${tile.path});"></div>
-                                <textarea class="tile-text">${tile.text}</textarea>
+                                <textarea class="tile-text" placeholder="Введите имя">${tile.text}</textarea>
                                 <div class="tile-bnts">
                                     <button class="tfo-delete-btn" data-id="${tile.id}">Удалить</button>
                                     <button class="tfo-save-btn" style="display: none;" data-id="${tile.id}">Сохранить</button>
-                                    
                                 </div>
                             </div>
                         `);
@@ -169,6 +232,115 @@
                         self.updateSort();
                     }
                 }).disableSelection();
+            },
+
+            initMenu: function() {
+                this.menu.on('click', (e) => {
+                    if($(e.target.parentNode).hasClass('selected')) {
+                        return;
+                    }
+                    else {
+                        this.menu.children().each(function(item){
+                            $(this).removeClass('selected');
+                        });
+                        $(e.target.parentNode).addClass('selected');
+
+                        this.block.each(function(item){
+                            $(this).hide();
+                        });
+
+                        this.block.each(function(item){
+                            if($(this).attr('data-block') == $(e.target.parentNode).attr('data-block')){
+                                $(this).show();
+                            }
+                        });
+                    }
+                    
+                })
+            },
+
+            initFormEdit: function() {
+                var self = this;
+
+                this.formEdit.submit(function() {
+                    var t = $(this);
+                    var m = t.find('.form-message');
+                    var filename = $("input[name='set[name]']").prop('value'); 
+
+                    m.hide();
+                    
+                    if(!$.tilesfoControl.isValidFilename(filename))
+                    {
+                        m.css('color', 'red');
+                        m.text("Название файла не должно содержать специальных символов: (\ / : * ? \" < > . |)").show();
+                        return false;
+                    }
+
+                    $.post(t.attr('action'), t.serialize(), function(jData) {
+                        if(jData.data.result == 1)
+                        {
+                            self.title.text(`Набор плиток: ${jData.data.set.name}`);
+                            $.tilesfoControl.updateSet(jData.data.set);
+                            m.css('color', 'green');
+                            m.text(jData.data.message).show();
+                            setTimeout(function() {
+                                m.hide(); 
+                            }, 5000);
+                        }
+                        else 
+                        {
+                            m.css('color', 'red');
+                            m.text(jData.data.message).show();
+                        }
+
+                    }, 'json');
+
+                    return false;
+			    });
+            },
+
+            initFormDelete: function() {
+                var self = this;
+            
+                this.formDelete.submit(function() {
+                    var t = $(this);
+                    var m = t.find('.form-message');
+                    var filename = $("input[name='set[name]']").prop('value');
+                    var filenameInput = $("input[name='nameInput']").prop('value');
+                    console.log(filename, filenameInput)
+                    m.hide();
+                    
+                    if(filename != filenameInput)
+                    {
+                        m.css('color', 'red');
+                        m.text("Имя набора введено не правильно").show();
+                        setTimeout(function() {
+                            m.hide(); 
+                        }, 5000);
+                        return false;
+                    }
+                    
+                    $.post(t.attr('action'), t.serialize(), function(jData) {
+                        if(jData.data.result == 1)
+                        {
+                            u = '?plugin=tilesfo&module=set&action=create';
+                            $.cookie('tfo_url', u, { expires: 365 });
+                            
+                            $.tilesfoControl.removeSet(jData.data.id);
+                            $.tilesfoControl.initPage();
+                        }
+                        else 
+                        {
+                            m.text(jData.data.message).show();
+                            setTimeout(function() {
+                                m.hide(); 
+                            }, 5000);
+                        }
+
+                    }, 'json');
+
+                    return false;
+                });
             },
 
             updateSort: function() {
