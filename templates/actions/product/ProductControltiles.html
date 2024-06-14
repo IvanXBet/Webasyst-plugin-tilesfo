@@ -15,11 +15,12 @@
         width: auto; 
         height: auto;
         overflow: auto;
+        padding-top: 0;
     }
 </style>
  
 <div class="sidebar tfo-sidebar" data-id="{$product_id|escape}" style="width: 200px;">
-    <div class="block">
+    <div>
         <ul class="menu-v with-icons">
             <li>
                 <a class="tfo-link" href="?plugin=tilesfo&module=set&action=create" data-post="product_id={$product_id|escape}">
@@ -42,7 +43,7 @@
     </div>
 </div>
 <div class="content left150px">
-    <div class="block double-padded tfo-ajax"><i class="icon16 loading"></i></div>
+    <div class="block tfo-ajax"><i class="icon16 loading"></i></div>
 </div>
 
 
